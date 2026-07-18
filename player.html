@@ -145,28 +145,6 @@
     text-decoration: none;
     border-bottom: 1px solid var(--border-strong);
   }
-
-  .rw-unlock-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(37,37,37,0.06);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-  }
-  .rw-unlock-overlay.show { display: flex; }
-  .rw-unlock-card {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 22px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  }
 </style>
 </head>
 <body>
@@ -203,10 +181,6 @@
     <div class="rw-credit">Streams vía <a href="https://somafm.com" target="_blank" rel="noopener">SomaFM</a></div>
   </div>
 
-</div>
-
-<div class="rw-unlock-overlay" id="rw-unlock-overlay">
-  <div class="rw-unlock-card">Toca en cualquier lugar para reproducir ▸</div>
 </div>
 
 <script>
@@ -267,33 +241,12 @@
     audio.src = channels[key].main;
     updateInfo(autoplay ? 'Cargando…' : 'Pausado');
     if(autoplay){
-      audio.play().then(function(){
-        hideUnlockOverlay();
-      }).catch(function(){
-        showUnlockOverlay();
-      });
+      audio.play().catch(function(){ /* puede requerir un click directo */ });
     }
   }
 
-  const unlockOverlay = document.getElementById('rw-unlock-overlay');
-
-  function showUnlockOverlay(){
-    unlockOverlay.classList.add('show');
-  }
-
-  function hideUnlockOverlay(){
-    unlockOverlay.classList.remove('show');
-  }
-
-  unlockOverlay.addEventListener('click', function(){
-    audio.play().then(function(){
-      hideUnlockOverlay();
-    }).catch(function(){ /* si vuelve a fallar, se queda visible */ });
-  });
-
   audio.addEventListener('playing', function(){
     setPlayingUI(true);
-    hideUnlockOverlay();
   });
 
   audio.addEventListener('pause', function(){
