@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  .radio-widget * { box-sizing: border-box; }
+  .radio-widget {
+    --surface-2: #ffffff;
+    --surface-1: #f7f6f3;
+    --border: #e3e1da;
+    --border-strong: #d3d0c6;
+    --text-primary: #1f1e1c;
+    --text-secondary: #6b6a63;
+    --text-muted: #9b9a92;
+    --ink: #252525;
+    --radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    width: 100%;
+    max-width: 550px;
+    margin: 0 auto;
+    background: transparent;
+    padding: 1.25rem 1.5rem;
+    color: var(--text-primary);
+  }
+
+  .rw-now {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.1rem;
+  }
+
+  .rw-play {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .rw-play:hover { background: var(--ink); border-color: var(--ink); }
+  .rw-play:hover svg { fill: #ffffff; }
+  .rw-play svg { width: 15px; height: 15px; fill: var(--text-primary); }
+
+  .rw-info { min-width: 0; }
+  .rw-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rw-subtitle {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .rw-moods {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+  .rw-mood {
+    font-family: inherit;
+    font-size: 12.5px;
+    padding: 9px 4px;
+    text-align: center;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .rw-mood:hover { background: var(--surface-1); }
+  .rw-mood.active {
+    background: var(--ink);
+    color: #ffffff;
+    border-color: var(--ink);
+  }
+
+  .rw-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rw-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .rw-credit {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .rw-credit a {
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-strong);
+  }
+</style>
+</head>
+<body>
+
+<div class="radio-widget">
+
+  <div class="rw-now">
+    <button class="rw-play" id="rw-play" aria-label="Reproducir en el navegador">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <div class="rw-info">
+      <div class="rw-title" id="rw-title">Groove Salad</div>
+      <div class="rw-subtitle">Chill / Downtempo · toca play para abrir en tu navegador</div>
+    </div>
+  </div>
+
+  <div class="rw-moods" id="rw-moods">
+    <button class="rw-mood active" data-key="chill">Chill</button>
+    <button class="rw-mood" data-key="ambient">Ambient</button>
+    <button class="rw-mood" data-key="deep">Deep Focus</button>
+    <button class="rw-mood" data-key="mellow">Mellow</button>
+    <button class="rw-mood" data-key="lofi">Lo-fi</button>
+  </div>
+
+  <div class="rw-bottom">
+    <div class="rw-hint" id="rw-hint">Abre nuestro reproductor en una pestaña nueva (sin archivos extra)</div>
+    <div class="rw-credit">Streams vía <a href="https://somafm.com" target="_blank" rel="noopener">SomaFM</a></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const channels = {
+    chill:   { label: 'Groove Salad',      tag: 'Chill / Downtempo',    main: 'https://ice5.somafm.com/groovesalad-128-mp3',  alt: 'https://ice3.somafm.com/groovesalad-128-mp3' },
+    ambient: { label: 'Drone Zone',        tag: 'Ambient',              main: 'https://ice5.somafm.com/dronezone-128-mp3',    alt: 'https://ice3.somafm.com/dronezone-128-mp3' },
+    deep:    { label: 'Deep Space One',    tag: 'Deep Focus',           main: 'https://ice5.somafm.com/deepspaceone-128-mp3', alt: 'https://ice3.somafm.com/deepspaceone-128-mp3' },
+    mellow:  { label: 'Lush',              tag: 'Mellow / Vocal',       main: 'https://ice5.somafm.com/lush-128-mp3',         alt: 'https://ice3.somafm.com/lush-128-mp3' },
+    lofi:    { label: 'Fluid',             tag: 'Lo-fi / Instrumental', main: 'https://ice5.somafm.com/fluid-128-mp3',        alt: 'https://ice3.somafm.com/fluid-128-mp3' }
+  };
+
+  let activeKey = 'chill';
+
+  const playBtn = document.getElementById('rw-play');
+  const titleEl = document.getElementById('rw-title');
+  const subtitleEl = document.querySelector('.rw-subtitle');
+  const moodBtns = document.querySelectorAll('.rw-mood');
+
+  function updateInfo(){
+    const ch = channels[activeKey];
+    titleEl.textContent = ch.label;
+    subtitleEl.textContent = ch.tag + ' · toca play para abrir en tu navegador';
+  }
+
+  moodBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      activeKey = btn.dataset.key;
+      moodBtns.forEach(function(b){ b.classList.toggle('active', b === btn); });
+      updateInfo();
+    });
+  });
+
+  // ⚠️ Reemplaza esta URL por la de tu player.html ya hosteado (ej. GitHub Pages)
+  const PLAYER_BASE_URL = 'https://TU-USUARIO.github.io/TU-REPO/player.html';
+
+  playBtn.addEventListener('click', function(){
+    const url = PLAYER_BASE_URL + '?mood=' + activeKey + '&autoplay=1';
+    window.open(url, '_blank', 'noopener');
+  });
+
+  updateInfo();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Radio — Second Brain</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #f7f6f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .radio-widget * { box-sizing: border-box; }
+  .radio-widget {
+    --surface-2: #ffffff;
+    --surface-1: #f7f6f3;
+    --border: #e3e1da;
+    --border-strong: #d3d0c6;
+    --text-primary: #1f1e1c;
+    --text-secondary: #6b6a63;
+    --text-muted: #9b9a92;
+    --ink: #252525;
+    --radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem 1.75rem;
+    color: var(--text-primary);
+  }
+
+  .rw-now {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.1rem;
+  }
+
+  .rw-play {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .rw-play:hover { background: var(--surface-1); }
+  .rw-play.playing {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .rw-play svg { width: 16px; height: 16px; }
+  .rw-play .icon-play { fill: var(--text-primary); }
+  .rw-play.playing .icon-play { fill: #ffffff; }
+  .rw-play .icon-pause { fill: #ffffff; }
+
+  .rw-info { min-width: 0; }
+  .rw-title {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rw-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rw-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .rw-live-dot.live {
+    background: #3b6d11;
+  }
+
+  .rw-moods {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+  .rw-mood {
+    font-family: inherit;
+    font-size: 12.5px;
+    padding: 9px 4px;
+    text-align: center;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .rw-mood:hover { background: var(--surface-1); }
+  .rw-mood.active {
+    background: var(--ink);
+    color: #ffffff;
+    border-color: var(--ink);
+  }
+
+  .rw-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 0.9rem;
+  }
+  .rw-volume {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 170px;
+  }
+  .rw-volume svg { width: 14px; height: 14px; flex-shrink: 0; fill: var(--text-muted); }
+  .rw-volume input[type="range"] {
+    flex: 1;
+    accent-color: var(--ink);
+  }
+  .rw-credit {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .rw-credit a {
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-strong);
+  }
+</style>
+</head>
+<body>
+
+<div class="radio-widget">
+
+  <div class="rw-now">
+    <div class="rw-info">
+      <div class="rw-title" id="rw-title">Chill</div>
+      <div class="rw-subtitle">
+        <span id="rw-subtitle-text">Chilling</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rw-moods" id="rw-moods">
+    <button class="rw-mood active" data-key="chill">Chill</button>
+    <button class="rw-mood" data-key="ambient">Ambient</button>
+    <button class="rw-mood" data-key="deep">Deep Focus</button>
+    <button class="rw-mood" data-key="mellow">Mellow</button>
+    <button class="rw-mood" data-key="lofi">Lo-fi</button>
+  </div>
+
+  <div id="rw-iframe-wrap" style="border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--surface-1); margin-bottom:0.9rem;"></div>
+
+  <div class="rw-bottom">
+    <div class="rw-credit">Streams vía <a href="https://loficafe.net" target="_blank" rel="noopener">Lofi Cafe</a></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const channels = {
+    chill:   { label: 'Groove Salad',      tag: 'Chill / Downtempo',    station: 'chilling' },
+    ambient: { label: 'Ambient',           tag: 'Ambient / Working',    station: 'working' },
+    deep:    { label: 'Deep Focus',        tag: 'Deep Focus / Studying',station: 'studying' },
+    mellow:  { label: 'Mellow',            tag: 'Mellow / Sleeping',    station: 'sleeping' },
+    lofi:    { label: 'Lo-fi',             tag: 'Lo-fi / Japanese',     station: 'japanese-lofi' }
+  };
+
+  function paramMood(){
+    const params = new URLSearchParams(window.location.search);
+    const m = params.get('mood');
+    return channels[m] ? m : 'chill';
+  }
+
+  let activeKey = paramMood();
+
+  const titleEl = document.getElementById('rw-title');
+  const subtitleText = document.getElementById('rw-subtitle-text');
+  const moodBtns = document.querySelectorAll('.rw-mood');
+  const iframeWrap = document.getElementById('rw-iframe-wrap');
+
+  function loadChannel(key){
+    activeKey = key;
+    moodBtns.forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.key === key);
+    });
+    const ch = channels[key];
+    titleEl.textContent = ch.label;
+    subtitleText.textContent = ch.tag;
+    iframeWrap.innerHTML = '<iframe src="https://loficafe.net/embed/' + ch.station + '" title="Lofi Cafe player" allow="autoplay" loading="lazy" style="width:100%; height:200px; border:none; display:block;"></iframe>';
+  }
+
+  moodBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(btn.dataset.key === activeKey) return;
+      loadChannel(btn.dataset.key);
+    });
+  });
+
+  loadChannel(activeKey);
+})();
+</script>
+
+</body>
+</html>
