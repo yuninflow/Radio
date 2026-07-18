@@ -152,10 +152,15 @@
 <div class="radio-widget">
 
   <div class="rw-now">
+    <button class="rw-play" id="rw-play" aria-label="Reproducir">
+      <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
     <div class="rw-info">
-      <div class="rw-title" id="rw-title">Chill</div>
+      <div class="rw-title" id="rw-title">Groove Salad</div>
       <div class="rw-subtitle">
-        <span id="rw-subtitle-text">Chilling</span>
+        <span class="rw-live-dot" id="rw-live-dot"></span>
+        <span id="rw-subtitle-text">Chill · Pausado</span>
       </div>
     </div>
   </div>
@@ -168,10 +173,12 @@
     <button class="rw-mood" data-key="lofi">Lo-fi</button>
   </div>
 
-  <div id="rw-iframe-wrap" style="border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--surface-1); margin-bottom:0.9rem;"></div>
-
   <div class="rw-bottom">
-    <div class="rw-credit">Streams vía <a href="https://loficafe.net" target="_blank" rel="noopener">Lofi Cafe</a></div>
+    <div class="rw-volume">
+      <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.29-2-4.28v8.56c1.23-.99 2-2.51 2-4.28z"/></svg>
+      <input type="range" id="rw-volume-slider" min="0" max="100" value="70">
+    </div>
+    <div class="rw-credit">Streams vía <a href="https://somafm.com" target="_blank" rel="noopener">SomaFM</a></div>
   </div>
 
 </div>
@@ -179,11 +186,11 @@
 <script>
 (function(){
   const channels = {
-    chill:   { label: 'Groove Salad',      tag: 'Chill / Downtempo',    station: 'chilling' },
-    ambient: { label: 'Ambient',           tag: 'Ambient / Working',    station: 'working' },
-    deep:    { label: 'Deep Focus',        tag: 'Deep Focus / Studying',station: 'studying' },
-    mellow:  { label: 'Mellow',            tag: 'Mellow / Sleeping',    station: 'sleeping' },
-    lofi:    { label: 'Lo-fi',             tag: 'Lo-fi / Japanese',     station: 'japanese-lofi' }
+    chill:   { label: 'Groove Salad',      tag: 'Chill / Downtempo',    main: 'https://ice5.somafm.com/groovesalad-128-mp3',  alt: 'https://ice3.somafm.com/groovesalad-128-mp3' },
+    ambient: { label: 'Drone Zone',        tag: 'Ambient',              main: 'https://ice5.somafm.com/dronezone-128-mp3',    alt: 'https://ice3.somafm.com/dronezone-128-mp3' },
+    deep:    { label: 'Deep Space One',    tag: 'Deep Focus',           main: 'https://ice5.somafm.com/deepspaceone-128-mp3', alt: 'https://ice3.somafm.com/deepspaceone-128-mp3' },
+    mellow:  { label: 'Lush',              tag: 'Mellow / Vocal',       main: 'https://ice5.somafm.com/lush-128-mp3',         alt: 'https://ice3.somafm.com/lush-128-mp3' },
+    lofi:    { label: 'Fluid',             tag: 'Lo-fi / Instrumental', main: 'https://ice5.somafm.com/fluid-128-mp3',        alt: 'https://ice3.somafm.com/fluid-128-mp3' }
   };
 
   function paramMood(){
@@ -193,31 +200,99 @@
   }
 
   let activeKey = paramMood();
+  let usingAlt = false;
+  let playing = false;
 
+  const audio = new Audio();
+  audio.preload = 'none';
+
+  const playBtn = document.getElementById('rw-play');
+  const iconPlay = playBtn.querySelector('.icon-play');
+  const iconPause = playBtn.querySelector('.icon-pause');
   const titleEl = document.getElementById('rw-title');
   const subtitleText = document.getElementById('rw-subtitle-text');
+  const liveDot = document.getElementById('rw-live-dot');
   const moodBtns = document.querySelectorAll('.rw-mood');
-  const iframeWrap = document.getElementById('rw-iframe-wrap');
+  const volumeSlider = document.getElementById('rw-volume-slider');
 
-  function loadChannel(key){
+  audio.volume = volumeSlider.value / 100;
+
+  function updateInfo(status){
+    const ch = channels[activeKey];
+    titleEl.textContent = ch.label;
+    subtitleText.textContent = ch.tag + ' · ' + status;
+  }
+
+  function setPlayingUI(isPlaying){
+    playing = isPlaying;
+    playBtn.classList.toggle('playing', isPlaying);
+    iconPlay.style.display = isPlaying ? 'none' : 'block';
+    iconPause.style.display = isPlaying ? 'block' : 'none';
+    liveDot.classList.toggle('live', isPlaying);
+    updateInfo(isPlaying ? 'En vivo' : 'Pausado');
+  }
+
+  function loadChannel(key, autoplay){
     activeKey = key;
+    usingAlt = false;
     moodBtns.forEach(function(btn){
       btn.classList.toggle('active', btn.dataset.key === key);
     });
-    const ch = channels[key];
-    titleEl.textContent = ch.label;
-    subtitleText.textContent = ch.tag;
-    iframeWrap.innerHTML = '<iframe src="https://loficafe.net/embed/' + ch.station + '" title="Lofi Cafe player" allow="autoplay" loading="lazy" style="width:100%; height:200px; border:none; display:block;"></iframe>';
+    audio.src = channels[key].main;
+    updateInfo(autoplay ? 'Cargando…' : 'Pausado');
+    if(autoplay){
+      audio.play().catch(function(){ /* puede requerir un click directo */ });
+    }
   }
+
+  audio.addEventListener('playing', function(){
+    setPlayingUI(true);
+  });
+
+  audio.addEventListener('pause', function(){
+    setPlayingUI(false);
+  });
+
+  audio.addEventListener('error', function(){
+    if(!usingAlt){
+      usingAlt = true;
+      audio.src = channels[activeKey].alt;
+      if(playing) audio.play().catch(function(){});
+    } else {
+      updateInfo('No disponible');
+    }
+  });
+
+  playBtn.addEventListener('click', function(){
+    if(playing){
+      audio.pause();
+    } else {
+      if(!audio.src){ audio.src = channels[activeKey].main; }
+      updateInfo('Cargando…');
+      audio.play().catch(function(){ updateInfo('No disponible'); });
+    }
+  });
 
   moodBtns.forEach(function(btn){
     btn.addEventListener('click', function(){
       if(btn.dataset.key === activeKey) return;
-      loadChannel(btn.dataset.key);
+      loadChannel(btn.dataset.key, playing);
     });
   });
 
-  loadChannel(activeKey);
+  volumeSlider.addEventListener('input', function(){
+    audio.volume = volumeSlider.value / 100;
+  });
+
+  moodBtns.forEach(function(btn){
+    btn.classList.toggle('active', btn.dataset.key === activeKey);
+  });
+  const params = new URLSearchParams(window.location.search);
+  const shouldAutoplay = params.get('autoplay') === '1';
+  updateInfo('Pausado');
+  if(shouldAutoplay){
+    loadChannel(activeKey, true);
+  }
 })();
 </script>
 

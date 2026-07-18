@@ -132,7 +132,7 @@
   </div>
 
   <div class="rw-bottom">
-    <div class="rw-hint" id="rw-hint">Abre nuestro reproductor en una pestaña nueva (sin archivos extra)</div>
+    <div class="rw-hint" id="rw-hint">Abre nuestro reproductor en una pestaña nueva</div>
     <div class="rw-credit">Streams vía <a href="https://somafm.com" target="_blank" rel="noopener">SomaFM</a></div>
   </div>
 
@@ -141,11 +141,11 @@
 <script>
 (function(){
   const channels = {
-    chill:   { label: 'Groove Salad',      tag: 'Chill / Downtempo',    main: 'https://ice5.somafm.com/groovesalad-128-mp3',  alt: 'https://ice3.somafm.com/groovesalad-128-mp3' },
-    ambient: { label: 'Drone Zone',        tag: 'Ambient',              main: 'https://ice5.somafm.com/dronezone-128-mp3',    alt: 'https://ice3.somafm.com/dronezone-128-mp3' },
-    deep:    { label: 'Deep Space One',    tag: 'Deep Focus',           main: 'https://ice5.somafm.com/deepspaceone-128-mp3', alt: 'https://ice3.somafm.com/deepspaceone-128-mp3' },
-    mellow:  { label: 'Lush',              tag: 'Mellow / Vocal',       main: 'https://ice5.somafm.com/lush-128-mp3',         alt: 'https://ice3.somafm.com/lush-128-mp3' },
-    lofi:    { label: 'Fluid',             tag: 'Lo-fi / Instrumental', main: 'https://ice5.somafm.com/fluid-128-mp3',        alt: 'https://ice3.somafm.com/fluid-128-mp3' }
+    chill:   { label: 'Groove Salad',      tag: 'Chill / Downtempo' },
+    ambient: { label: 'Drone Zone',        tag: 'Ambient' },
+    deep:    { label: 'Deep Space One',    tag: 'Deep Focus' },
+    mellow:  { label: 'Lush',              tag: 'Mellow / Vocal' },
+    lofi:    { label: 'Fluid',             tag: 'Lo-fi / Instrumental' }
   };
 
   let activeKey = 'chill';
@@ -169,8 +169,7 @@
     });
   });
 
-  // ⚠️ Reemplaza esta URL por la de tu player.html ya hosteado (ej. GitHub Pages)
-  const PLAYER_BASE_URL = 'https://TU-USUARIO.github.io/TU-REPO/player.html';
+  const PLAYER_BASE_URL = 'https://yuninflow.github.io/Radio/player.html';
 
   playBtn.addEventListener('click', function(){
     const url = PLAYER_BASE_URL + '?mood=' + activeKey + '&autoplay=1';
